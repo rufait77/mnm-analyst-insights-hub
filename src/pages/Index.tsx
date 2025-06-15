@@ -30,9 +30,8 @@ const Index = () => {
             </div>
 
             <DataIngestion />
-            <DataCleaning />
-            <AnalysisVisualization />
-            <ReportGeneration />
+            {/* Remove AnalysisVisualization here */}
+            {/* <AnalysisVisualization /> */}
 
             <div className="mt-6 text-xs text-muted-foreground">
               <b className="text-accent">Unique Advantage:</b> MnM Analyst is built for non-technical business teams who need quick answers from real-world data. Even incomplete or messy spreadsheets are welcome!
