@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { FileText, Loader2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 import FileList, { type FileRow } from "./FileList";
 import { Button } from "@/components/ui/button";
+import { analyzeCsvIssues, type CsvIssue } from "@/utils/analyzeCsvIssues";
 
 const BUCKET = "uploads";
 
@@ -22,6 +22,9 @@ const DataIngestion = () => {
   const [selectedRow, setSelectedRow] = useState<FileRow | null>(null);
   const [rowPreview, setRowPreview] = useState<{ headers: string[]; rows: string[][] } | null>(null);
   const [loadingRowPreview, setLoadingRowPreview] = useState(false);
+
+  // Add for cleaning diagnostics:
+  const [cleaningReport, setCleaningReport] = useState<CsvIssue[] | null>(null);
 
   const handleClick = () => {
     inputRef.current?.click();
@@ -45,12 +48,18 @@ const DataIngestion = () => {
               headers: rows[0],
               rows: rows.slice(1, 6) // first 5 rows
             });
+            // Analyze file issues (for first 100 rows)
+            setCleaningReport(analyzeCsvIssues(rows[0], rows.slice(1, 100)));
           }
         },
-        error: () => setPreview(null)
+        error: () => {
+          setPreview(null);
+          setCleaningReport(null);
+        }
       });
     } else {
       setPreview(null);
+      setCleaningReport(null);
     }
   };
 
@@ -138,16 +147,20 @@ const DataIngestion = () => {
               headers: rows[0],
               rows: rows.slice(1, 6) // first 5 rows
             });
+            // Analyze for cleaning
+            setCleaningReport(analyzeCsvIssues(rows[0], rows.slice(1, 100)));
           }
           setLoadingRowPreview(false);
         },
         error: () => {
           setRowPreview(null);
+          setCleaningReport(null);
           setLoadingRowPreview(false);
         }
       });
     } else {
       setRowPreview(null);
+      setCleaningReport(null);
       setLoadingRowPreview(false);
     }
   };
@@ -198,6 +211,24 @@ const DataIngestion = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {/* Data cleaning guidance for uploaded file */}
+      {cleaningReport && (
+        <div className="mt-2 w-full max-w-xl border-l-4 border-yellow-400 bg-yellow-50/70 p-4 rounded shadow-sm">
+          <div className="font-semibold mb-1 text-yellow-800">CSV Data Cleaning Suggestions:</div>
+          <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
+            {cleaningReport.map((issue, i) => (
+              <li key={i}>
+                <b>{issue.message}</b>
+                {issue.suggestions && (
+                  <ul className="list-[circle] list-inside ml-5 mt-1 space-y-0.5">
+                    {issue.suggestions.map((s, j) => <li key={j}>{s}</li>)}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {/* Show selected file name */}
