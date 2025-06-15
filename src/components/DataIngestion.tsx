@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { analyzeCsvIssues, type CsvIssue } from "@/utils/analyzeCsvIssues";
 import CsvPreviewWithGuidance from "./CsvPreviewWithGuidance";
 import SelectedFilePreviewWithGuidance from "./SelectedFilePreviewWithGuidance";
+import AnalysisVisualization from "@/components/AnalysisVisualization";
 
 const BUCKET = "uploads";
 
@@ -231,6 +232,9 @@ const DataIngestion = () => {
           cleaningReport={cleaningReport}
         />
       )}
+
+      {/* Analysis Visualization section: pass selectedRow and rowPreview */}
+      <AnalysisVisualization selectedRow={selectedRow} rowPreview={rowPreview} />
 
       {/* File list */}
       <div className="w-full mt-12">
