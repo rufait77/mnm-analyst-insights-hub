@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -34,6 +33,10 @@ const DataIngestion = () => {
       setUploading(false);
       return;
     }
+
+    // Log user info for debugging RLS error
+    console.log("DEBUG - Authenticated user object:", user);
+
     const storagePath = `${user.id}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
@@ -47,6 +50,8 @@ const DataIngestion = () => {
     }
 
     // 2. Insert file record
+    console.log("DEBUG - Inserting into files with user_id:", user.id);
+
     const { error: insertError } = await supabase
       .from("files")
       .insert({
@@ -56,6 +61,7 @@ const DataIngestion = () => {
       });
 
     if (insertError) {
+      console.error("DEBUG - Failed to insert file record", insertError);
       toast({ title: "Error", description: insertError.message, variant: "destructive" });
       setUploading(false);
       return;
