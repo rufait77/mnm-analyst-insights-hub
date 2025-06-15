@@ -17,7 +17,6 @@ function csvToColumnsRows(csv: string[][]) {
 }
 
 function guessBarChart(headers: string[], rows: string[][]) {
-  // Pick first categorical, one numeric column (demo only)
   if (!headers?.length || !rows?.length) return [];
   const colTypes: ("number" | "string")[] = [];
   for (let j = 0; j < headers.length; ++j) {
@@ -27,7 +26,6 @@ function guessBarChart(headers: string[], rows: string[][]) {
   const catIdx = colTypes.findIndex(t => t === "string");
   const numIdx = colTypes.findIndex(t => t === "number");
   if (catIdx === -1 || numIdx === -1) return [];
-  // Aggregate by category
   const agg: Record<string, number> = {};
   rows.forEach(r => {
     const key = r[catIdx] || "(blank)";
@@ -38,7 +36,6 @@ function guessBarChart(headers: string[], rows: string[][]) {
 }
 
 function guessPieChart(headers: string[], rows: string[][]) {
-  // Use grouped distribution of first categorical field (count frequency)
   if (!headers?.length || !rows?.length) return [];
   const colTypes: ("number" | "string")[] = [];
   for (let j = 0; j < headers.length; ++j) {
@@ -56,7 +53,6 @@ function guessPieChart(headers: string[], rows: string[][]) {
 }
 
 function guessTrendChart(headers: string[], rows: string[][]) {
-  // Use first numeric as y, first col as x axis (if looks like a date)
   if (!headers?.length || !rows?.length) return [];
   const colTypes: ("number" | "string")[] = [];
   for (let j = 0; j < headers.length; ++j) {
@@ -73,7 +69,6 @@ function guessTrendChart(headers: string[], rows: string[][]) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -91,7 +86,6 @@ serve(async (req) => {
     }
     const { headers, rows } = csvToColumnsRows(csv);
 
-    // AI insight with OpenAI
     const systemPrompt = `You are a senior business data analyst. Look at the provided CSV data and generate a short business summary/insight (max 3 sentences), highlighting any important trend, outlier, or key conclusion for non-technical business users, based only on the data.`;
 
     const userPrompt = `CSV preview:
@@ -122,7 +116,6 @@ serve(async (req) => {
       responseJson?.choices?.[0]?.message?.content?.trim() ||
       "No summary available.";
 
-    // Heuristic chart extraction (could be improved)
     const barData = guessBarChart(headers, rows);
     const pieData = guessPieChart(headers, rows);
     const trendData = guessTrendChart(headers, rows);
