@@ -7,6 +7,8 @@ import Papa from "papaparse";
 import FileList, { type FileRow } from "./FileList";
 import { Button } from "@/components/ui/button";
 import { analyzeCsvIssues, type CsvIssue } from "@/utils/analyzeCsvIssues";
+import CsvPreviewWithGuidance from "./CsvPreviewWithGuidance";
+import SelectedFilePreviewWithGuidance from "./SelectedFilePreviewWithGuidance";
 
 const BUCKET = "uploads";
 
@@ -191,45 +193,13 @@ const DataIngestion = () => {
         onChange={handleFileChange}
         disabled={uploading}
       />
-      {/* Preview parsed table */}
+      {/* Preview parsed table + data cleaning guidance for upload */}
       {preview && (
-        <div className="mt-6 w-full max-w-xl">
-          <div className="font-bold mb-2 text-accent-foreground">CSV Preview:</div>
-          <div className="overflow-auto border rounded bg-white shadow">
-            <table className="min-w-full text-xs">
-              <thead>
-                <tr>
-                  {preview.headers.map((h, i) => <th className="px-2 py-1 border-b" key={i}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {preview.rows.map((row, i) => (
-                  <tr key={i}>
-                    {row.map((cell, j) => <td className="px-2 py-1" key={j}>{cell}</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Data cleaning guidance for uploaded file, now ALWAYS just below preview */}
-          {cleaningReport && (
-            <div className="mt-2 w-full border-l-4 border-yellow-400 bg-yellow-50/70 p-4 rounded shadow-sm">
-              <div className="font-semibold mb-1 text-yellow-800">CSV Data Cleaning Suggestions:</div>
-              <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
-                {cleaningReport.map((issue, i) => (
-                  <li key={i}>
-                    <b>{issue.message}</b>
-                    {issue.suggestions && (
-                      <ul className="list-[circle] list-inside ml-5 mt-1 space-y-0.5">
-                        {issue.suggestions.map((s, j) => <li key={j}>{s}</li>)}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+        <CsvPreviewWithGuidance
+          headers={preview.headers}
+          rows={preview.rows}
+          cleaningReport={cleaningReport}
+        />
       )}
       {/* Show selected file name and Upload button */}
       {selectedFile && (
@@ -253,54 +223,13 @@ const DataIngestion = () => {
 
       {/* Show selected row preview for previously uploaded files */}
       {selectedRow && (
-        <div className="mt-8 w-full max-w-xl border rounded bg-muted/10 p-4 shadow-sm">
-          <div className="font-medium text-accent-foreground flex flex-wrap items-center gap-2 mb-2">
-            <span>Selected file:</span>
-            <span className="font-mono text-xs bg-accent px-2 py-0.5 rounded">{selectedRow.original_filename}</span>
-          </div>
-          {loadingRowPreview ? (
-            <div className="text-muted-foreground text-xs">Loading preview...</div>
-          ) : rowPreview ? (
-            <div>
-              <div className="overflow-auto border rounded bg-white">
-                <table className="min-w-full text-xs">
-                  <thead>
-                    <tr>
-                      {rowPreview.headers.map((h, i) => <th className="px-2 py-1 border-b" key={i}>{h}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rowPreview.rows.map((row, i) => (
-                      <tr key={i}>
-                        {row.map((cell, j) => <td className="px-2 py-1" key={j}>{cell}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Data cleaning guidance for selected file */}
-              {cleaningReport && (
-                <div className="mt-2 w-full border-l-4 border-yellow-400 bg-yellow-50/70 p-4 rounded shadow-sm">
-                  <div className="font-semibold mb-1 text-yellow-800">CSV Data Cleaning Suggestions:</div>
-                  <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
-                    {cleaningReport.map((issue, i) => (
-                      <li key={i}>
-                        <b>{issue.message}</b>
-                        {issue.suggestions && (
-                          <ul className="list-[circle] list-inside ml-5 mt-1 space-y-0.5">
-                            {issue.suggestions.map((s, j) => <li key={j}>{s}</li>)}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-muted-foreground text-xs">No preview available for this file type.</div>
-          )}
-        </div>
+        <SelectedFilePreviewWithGuidance
+          filename={selectedRow.original_filename}
+          loading={loadingRowPreview}
+          headers={rowPreview?.headers ?? null}
+          rows={rowPreview?.rows ?? null}
+          cleaningReport={cleaningReport}
+        />
       )}
 
       {/* File list */}
