@@ -35,11 +35,15 @@ const AnalysisVisualization = ({
         ...rowPreview.rows.slice(0, 100)
       ];
 
-      const res = await fetch("/functions/v1/analyze-csv-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: csvPayload }),
-      });
+      // FIX: Use full Supabase Edge Functions URL
+      const res = await fetch(
+        "https://izigohixbhppyyoueutp.functions.supabase.co/analyze-csv-ai",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csv: csvPayload }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to analyze CSV");
       const json = await res.json();
