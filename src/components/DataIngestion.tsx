@@ -211,24 +211,24 @@ const DataIngestion = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-      {/* Data cleaning guidance for uploaded file */}
-      {cleaningReport && (
-        <div className="mt-2 w-full max-w-xl border-l-4 border-yellow-400 bg-yellow-50/70 p-4 rounded shadow-sm">
-          <div className="font-semibold mb-1 text-yellow-800">CSV Data Cleaning Suggestions:</div>
-          <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
-            {cleaningReport.map((issue, i) => (
-              <li key={i}>
-                <b>{issue.message}</b>
-                {issue.suggestions && (
-                  <ul className="list-[circle] list-inside ml-5 mt-1 space-y-0.5">
-                    {issue.suggestions.map((s, j) => <li key={j}>{s}</li>)}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+          {/* Data cleaning guidance: always immediately below preview */}
+          {cleaningReport && (
+            <div className="mt-2 w-full border-l-4 border-yellow-400 bg-yellow-50/70 p-4 rounded shadow-sm">
+              <div className="font-semibold mb-1 text-yellow-800">CSV Data Cleaning Suggestions:</div>
+              <ul className="list-disc list-inside text-sm text-yellow-900 space-y-1">
+                {cleaningReport.map((issue, i) => (
+                  <li key={i}>
+                    <b>{issue.message}</b>
+                    {issue.suggestions && (
+                      <ul className="list-[circle] list-inside ml-5 mt-1 space-y-0.5">
+                        {issue.suggestions.map((s, j) => <li key={j}>{s}</li>)}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       {/* Show selected file name */}
