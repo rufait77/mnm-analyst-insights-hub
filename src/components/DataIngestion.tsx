@@ -3,9 +3,9 @@ import { useRef, useState } from "react";
 import { FileText, Loader2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import Papa from "papaparse";
-import FileList from "./FileList";
+import FileList, { type FileRow } from "./FileList";
 import { Button } from "@/components/ui/button";
 
 const BUCKET = "uploads";
@@ -17,6 +17,11 @@ const DataIngestion = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<{ headers: string[]; rows: string[][] } | null>(null);
   const [fileListKey, setFileListKey] = useState(0); // for forcing FileList to refresh
+
+  // NEW: Track file row selection for preview (from FileList)
+  const [selectedRow, setSelectedRow] = useState<FileRow | null>(null);
+  const [rowPreview, setRowPreview] = useState<{ headers: string[]; rows: string[][] } | null>(null);
+  const [loadingRowPreview, setLoadingRowPreview] = useState(false);
 
   const handleClick = () => {
     inputRef.current?.click();
@@ -106,6 +111,47 @@ const DataIngestion = () => {
     setUploading(false);
   };
 
+  // When a row in the FileList is selected, download and preview the CSV file (if a CSV)
+  const handleSelectRow = async (fileRow: FileRow) => {
+    setSelectedRow(fileRow);
+    setRowPreview(null);
+    setLoadingRowPreview(true);
+
+    // Only handle if CSV for now
+    if (fileRow.original_filename.endsWith(".csv")) {
+      // Download file from storage
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .download(fileRow.storage_path);
+      if (error || !data) {
+        setRowPreview(null);
+        setLoadingRowPreview(false);
+        toast({ title: "Failed to load file", description: error?.message, variant: "destructive" });
+        return;
+      }
+      // Parse CSV from Blob
+      Papa.parse(data, {
+        complete: (res: Papa.ParseResult<string[]>) => {
+          const rows = res.data as string[][];
+          if (rows.length) {
+            setRowPreview({
+              headers: rows[0],
+              rows: rows.slice(1, 6) // first 5 rows
+            });
+          }
+          setLoadingRowPreview(false);
+        },
+        error: () => {
+          setRowPreview(null);
+          setLoadingRowPreview(false);
+        }
+      });
+    } else {
+      setRowPreview(null);
+      setLoadingRowPreview(false);
+    }
+  };
+
   return (
     <Card className="flex flex-col items-center justify-center gap-4 py-10 px-8 min-h-[220px] bg-accent/30 border-dashed border-2 border-accent hover:shadow-md transition-shadow">
       <FileText size={40} className="text-accent mb-2" />
@@ -173,9 +219,47 @@ const DataIngestion = () => {
           </Button>
         </div>
       )}
+
+      {/* --------- New: Show selected row preview -------- */}
+      {selectedRow && (
+        <div className="mt-8 w-full max-w-xl border rounded bg-muted/10 p-4 shadow-sm">
+          <div className="font-medium text-accent-foreground flex flex-wrap items-center gap-2 mb-2">
+            <span>Selected file:</span>
+            <span className="font-mono text-xs bg-accent px-2 py-0.5 rounded">{selectedRow.original_filename}</span>
+          </div>
+          {loadingRowPreview ? (
+            <div className="text-muted-foreground text-xs">Loading preview...</div>
+          ) : rowPreview ? (
+            <div className="overflow-auto border rounded bg-white">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr>
+                    {rowPreview.headers.map((h, i) => <th className="px-2 py-1 border-b" key={i}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rowPreview.rows.map((row, i) => (
+                    <tr key={i}>
+                      {row.map((cell, j) => <td className="px-2 py-1" key={j}>{cell}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-xs">No preview available for this file type.</div>
+          )}
+          {/* FUTURE: Add data cleaning or export actions here when implemented */}
+        </div>
+      )}
+
       {/* File list */}
       <div className="w-full mt-12">
-        <FileList key={fileListKey} />
+        <FileList
+          key={fileListKey}
+          selectedFileId={selectedRow?.id}
+          onSelectFile={handleSelectRow}
+        />
       </div>
     </Card>
   );

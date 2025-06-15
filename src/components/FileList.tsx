@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
 
 type FileRow = {
@@ -13,9 +13,15 @@ type FileRow = {
   uploaded_at: string;
 };
 
+// Props for external control of selected file
+interface FileListProps {
+  selectedFileId?: string | null;
+  onSelectFile?: (file: FileRow) => void;
+}
+
 const BUCKET = "uploads";
 
-const FileList = () => {
+const FileList = ({ selectedFileId, onSelectFile }: FileListProps) => {
   const [files, setFiles] = useState<FileRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -70,6 +76,7 @@ const FileList = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Select</TableHead>
               <TableHead>Filename</TableHead>
               <TableHead>Uploaded At</TableHead>
               <TableHead>Download</TableHead>
@@ -78,7 +85,21 @@ const FileList = () => {
           </TableHeader>
           <TableBody>
             {files.map(f => (
-              <TableRow key={f.id}>
+              <TableRow
+                key={f.id}
+                className={selectedFileId === f.id ? "bg-accent/50" : ""}
+                data-state={selectedFileId === f.id ? "selected" : undefined}
+              >
+                <TableCell>
+                  <Button
+                    variant={selectedFileId === f.id ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => onSelectFile?.(f)}
+                    aria-label="Select file"
+                  >
+                    {selectedFileId === f.id ? "✔" : "→"}
+                  </Button>
+                </TableCell>
                 <TableCell>{f.original_filename}</TableCell>
                 <TableCell>{new Date(f.uploaded_at).toLocaleString()}</TableCell>
                 <TableCell>
@@ -111,4 +132,6 @@ const FileList = () => {
   );
 };
 
+export type { FileRow };
 export default FileList;
+
